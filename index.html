@@ -1,1027 +1,1036 @@
 <!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dodge the Blocks - Upgraded</title>  <style>
-    body {
-      margin: 0;
-      background: #111;
-      color: white;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      overflow: hidden;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dodge the Blocks</title><style>
+* {
+  box-sizing: border-box;
+}
 
-    h1 {
-      margin: 15px 0 5px;
-    }
+body {
+  margin: 0;
+  background: #111;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  overflow: hidden;
+}
 
-    #score {
-      font-size: 22px;
-      margin: 5px;
-    }
+h1 {
+  margin: 10px 0;
+}
 
-    #stats {
-      font-size: 19px;
-      margin: 5px;
-    }
+#startScreen {
+  margin-top: 60px;
+}
 
-    #message {
-      height: 28px;
-      font-size: 18px;
-      color: yellow;
-    }
+#startScreen h2 {
+  font-size: 30px;
+}
 
-    canvas {
-      background: #222;
-      border: 3px solid white;
-      display: block;
-      margin: auto;
-      max-width: 95vw;
-      max-height: 70vh;
-    }
+#startButton {
+  font-size: 32px;
+  font-weight: bold;
+  padding: 18px 45px;
+  margin-top: 20px;
+  background: lime;
+  color: black;
+  border: 4px solid white;
+  border-radius: 15px;
+  cursor: pointer;
+  box-shadow: 0 0 20px lime;
+}
 
-    #startScreen {
-      margin-top: 20px;
-    }
+#startButton:hover {
+  transform: scale(1.05);
+}
 
-    #startButton {
-      font-size: 32px;
-      font-weight: bold;
-      padding: 18px 45px;
-      background: lime;
-      color: black;
-      border: 4px solid white;
-      border-radius: 15px;
-      cursor: pointer;
-      box-shadow: 0 0 20px lime;
-    }
+#gameArea {
+  display: none;
+}
 
-    #startButton:hover {
-      transform: scale(1.05);
-    }
+#score {
+  font-size: 22px;
+}
 
-    #gameArea {
-      display: none;
-    }
+#stats {
+  font-size: 19px;
+  margin: 5px;
+}
 
-    #gameOver {
-      display: none;
-      font-size: 28px;
-      margin-top: 15px;
-    }
+#message {
+  height: 25px;
+  color: yellow;
+  font-size: 18px;
+}
 
-    #restartButton {
-      font-size: 22px;
-      padding: 12px 25px;
-      margin-top: 10px;
-      cursor: pointer;
-      border-radius: 10px;
-      border: none;
-    }
-  </style></head><body>  <h1>🚗 Dodge the Blocks!</h1>  <div id="startScreen">
-    <h2>Ready to Drive?</h2>
-    <p>Use the ⬅️ and ➡️ arrow keys to move.</p><button id="startButton" onclick="startGame()">
-  ▶ START GAME
+canvas {
+  display: block;
+  margin: auto;
+  background: #222;
+  border: 3px solid white;
+  width: 400px;
+  height: 600px;
+  max-width: 95vw;
+  max-height: 70vh;
+}
+
+#gameOver {
+  display: none;
+  font-size: 28px;
+  margin-top: 10px;
+}
+
+#restartButton {
+  font-size: 22px;
+  font-weight: bold;
+  padding: 12px 25px;
+  margin-top: 10px;
+  cursor: pointer;
+  border-radius: 10px;
+  border: none;
+}
+</style></head><body><h1>🚗 Dodge the Blocks!</h1><!-- START SCREEN --><div id="startScreen">  <h2>🏁 Ready to Drive?</h2>  <p>Use the ⬅️ and ➡️ arrow keys to move.</p>  <button id="startButton" onclick="startGame()">
+    ▶ START GAME
+  </button></div><!-- GAME AREA --><div id="gameArea">  <div id="score">Score: 0</div>  <div id="stats">
+    ❤️❤️❤️ | 🪙 0 | 🏆 0
+  </div>  <div id="message"></div><canvas id="game" width="400" height="600"></canvas>
+
+  <div id="gameOver">💥 GAME OVER!
+
+<br>
+
+<span id="finalScore"></span>
+
+<br>
+
+<button id="restartButton" onclick="restartGame()">
+  🔄 PLAY AGAIN
 </button>
 
-  </div>  <div id="gameArea"><div id="score">Score: 0</div>
+  </div></div><script>
 
-<div id="stats">
-  ❤️❤️❤️ | 🪙 0 | 🏆 0
-</div>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-<div id="message"></div>
+let player;
+let blocks = [];
+let coins = [];
+let powerUps = [];
 
-<canvas
-  id="game"
-  width="400"
-  height="600">
-</canvas>
+let score = 0;
+let coinCount = 0;
+let lives = 3;
 
-<div id="gameOver">
-  💥 Game Over!
-  <br>
-  <span id="finalScore"></span>
-  <br>
+let gameRunning = false;
 
-  <button
-    id="restartButton"
-    onclick="restartGame()">
-    🔄 PLAY AGAIN
-  </button>
-</div>
+let keys = {};
 
-  </div>  <script>
+let shield = false;
+let speedBoost = false;
 
-    const canvas =
-      document.getElementById("game");
+let frameCount = 0;
 
-    const ctx =
-      canvas.getContext("2d");
+let lastBlockSpawn = 0;
+let lastCoinSpawn = 0;
+let lastPowerSpawn = 0;
 
-    let player;
-    let blocks;
-    let coins;
-    let powerUps;
+let animationId = null;
 
-    let score;
-    let coinCount;
-    let lives;
-
-    let gameRunning = false;
-
-    let keys = {};
-
-    let shield = false;
-    let speedBoost = false;
-
-    let frameCount = 0;
-
-    let highScore =
-      localStorage.getItem("dodgeHighScore") || 0;
+let highScore =
+  Number(localStorage.getItem("dodgeHighScore")) || 0;
 
 
-    // Keyboard controls
-    document.addEventListener(
-      "keydown",
-      function(event) {
+// ============================
+// KEYBOARD
+// ============================
 
-        keys[event.key] = true;
+document.addEventListener("keydown", function(event) {
 
-        if (
-          event.key === "ArrowLeft" ||
-          event.key === "ArrowRight"
-        ) {
-          event.preventDefault();
-        }
+  if (
+    event.key === "ArrowLeft" ||
+    event.key === "ArrowRight"
+  ) {
+    event.preventDefault();
+  }
 
-      }
-    );
+  keys[event.key] = true;
 
-
-    document.addEventListener(
-      "keyup",
-      function(event) {
-
-        keys[event.key] = false;
-
-      }
-    );
+});
 
 
-    // START GAME
-    function startGame() {
+document.addEventListener("keyup", function(event) {
 
-      document.getElementById(
-        "startScreen"
-      ).style.display = "none";
+  keys[event.key] = false;
 
-      document.getElementById(
-        "gameArea"
-      ).style.display = "block";
-
-      player = {
-
-        x: 175,
-
-        y: 520,
-
-        width: 50,
-
-        height: 60,
-
-        speed: 6
-
-      };
+});
 
 
-      blocks = [];
+// ============================
+// START GAME
+// ============================
 
-      coins = [];
+function startGame() {
 
-      powerUps = [];
+  if (gameRunning) {
+    return;
+  }
+
+  player = {
+    x: 175,
+    y: 520,
+    width: 50,
+    height: 60,
+    speed: 6
+  };
+
+  blocks = [];
+  coins = [];
+  powerUps = [];
+
+  score = 0;
+  coinCount = 0;
+  lives = 3;
+
+  shield = false;
+  speedBoost = false;
+
+  frameCount = 0;
+
+  lastBlockSpawn = 0;
+  lastCoinSpawn = 0;
+  lastPowerSpawn = 0;
+
+  gameRunning = true;
+
+  keys = {};
+
+  document.getElementById("startScreen").style.display = "none";
+
+  document.getElementById("gameArea").style.display = "block";
+
+  document.getElementById("gameOver").style.display = "none";
+
+  document.getElementById("message").textContent = "";
+
+  updateStats();
+
+  if (animationId !== null) {
+    cancelAnimationFrame(animationId);
+  }
+
+  gameLoop();
+
+}
 
 
-      score = 0;
+// ============================
+// CREATE FALLING BLOCK
+// ============================
 
-      coinCount = 0;
+function createBlock() {
 
-      lives = 3;
+  const difficulty = Math.min(score * 0.05, 6);
 
+  const size = 40;
 
-      shield = false;
+  blocks.push({
 
-      speedBoost = false;
+    x: Math.random() * (canvas.width - size),
 
+    y: -size,
 
-      frameCount = 0;
+    width: size,
 
-      gameRunning = true;
+    height: size,
 
+    speed: 4 + Math.random() * 2 + difficulty
 
-      document.getElementById(
-        "gameOver"
-      ).style.display = "none";
+  });
 
-
-      document.getElementById(
-        "message"
-      ).textContent = "";
+}
 
 
-      gameLoop();
+// ============================
+// CREATE COIN
+// ============================
+
+function createCoin() {
+
+  coins.push({
+
+    x: Math.random() * (canvas.width - 25),
+
+    y: -25,
+
+    width: 25,
+
+    height: 25,
+
+    speed: 3
+
+  });
+
+}
+
+
+// ============================
+// CREATE POWER-UP
+// ============================
+
+function createPowerUp() {
+
+  const types = ["shield", "speed"];
+
+  const type =
+    types[Math.floor(Math.random() * types.length)];
+
+  powerUps.push({
+
+    x: Math.random() * (canvas.width - 30),
+
+    y: -30,
+
+    width: 30,
+
+    height: 30,
+
+    speed: 3,
+
+    type: type
+
+  });
+
+}
+
+
+// ============================
+// COLLISION
+// ============================
+
+function collision(a, b) {
+
+  return (
+
+    a.x < b.x + b.width &&
+
+    a.x + a.width > b.x &&
+
+    a.y < b.y + b.height &&
+
+    a.y + a.height > b.y
+
+  );
+
+}
+
+
+// ============================
+// UPDATE
+// ============================
+
+function update() {
+
+  if (!gameRunning) {
+    return;
+  }
+
+  frameCount++;
+
+
+  // ============================
+  // PLAYER MOVEMENT
+  // ============================
+
+  const currentSpeed =
+    speedBoost ? 10 : player.speed;
+
+
+  if (keys["ArrowLeft"]) {
+    player.x -= currentSpeed;
+  }
+
+
+  if (keys["ArrowRight"]) {
+    player.x += currentSpeed;
+  }
+
+
+  // Keep player inside canvas
+
+  if (player.x < 0) {
+    player.x = 0;
+  }
+
+
+  if (player.x > canvas.width - player.width) {
+    player.x = canvas.width - player.width;
+  }
+
+
+  // ============================
+  // BLOCK SPAWNING
+  // ============================
+
+  /*
+    Blocks now spawn using a timer
+    instead of random chance.
+
+    This makes sure blocks ALWAYS
+    start falling.
+  */
+
+  const blockInterval =
+    Math.max(350, 850 - score * 5);
+
+
+  if (
+    frameCount - lastBlockSpawn >
+    blockInterval / 16.67
+  ) {
+
+    createBlock();
+
+    lastBlockSpawn = frameCount;
+
+  }
+
+
+  // ============================
+  // COIN SPAWNING
+  // ============================
+
+  if (
+    frameCount - lastCoinSpawn >
+    90
+  ) {
+
+    if (Math.random() < 0.45) {
+      createCoin();
+    }
+
+    lastCoinSpawn = frameCount;
+
+  }
+
+
+  // ============================
+  // POWER-UP SPAWNING
+  // ============================
+
+  if (
+    frameCount - lastPowerSpawn >
+    360
+  ) {
+
+    if (Math.random() < 0.7) {
+      createPowerUp();
+    }
+
+    lastPowerSpawn = frameCount;
+
+  }
+
+
+  // ============================
+  // MOVE BLOCKS
+  // ============================
+
+  for (
+    let i = blocks.length - 1;
+    i >= 0;
+    i--
+  ) {
+
+    blocks[i].y += blocks[i].speed;
+
+
+    // Block successfully dodged
+
+    if (blocks[i].y > canvas.height) {
+
+      blocks.splice(i, 1);
+
+      score++;
 
     }
 
-
-    // CREATE BLOCK
-    function createBlock() {
-
-      let difficulty =
-        Math.min(score * 0.08, 5);
+  }
 
 
-      blocks.push({
+  // ============================
+  // MOVE COINS
+  // ============================
 
-        x:
-          Math.random() *
-          (canvas.width - 40),
+  for (
+    let i = coins.length - 1;
+    i >= 0;
+    i--
+  ) {
 
-        y: -40,
+    coins[i].y += coins[i].speed;
 
-        width: 40,
 
-        height: 40,
+    if (coins[i].y > canvas.height) {
 
-        speed:
-          3 +
-          Math.random() * 3 +
-          difficulty
-
-      });
+      coins.splice(i, 1);
 
     }
 
-
-    // CREATE COIN
-    function createCoin() {
-
-      coins.push({
-
-        x:
-          Math.random() *
-          (canvas.width - 25),
-
-        y: -25,
-
-        width: 25,
-
-        height: 25,
-
-        speed: 3
-
-      });
-
-    }
+  }
 
 
-    // CREATE POWER-UP
-    function createPowerUp() {
+  // ============================
+  // MOVE POWER-UPS
+  // ============================
 
-      const types =
-        ["shield", "speed"];
+  for (
+    let i = powerUps.length - 1;
+    i >= 0;
+    i--
+  ) {
 
-      const type =
-        types[
-          Math.floor(
-            Math.random() *
-            types.length
-          )
-        ];
+    powerUps[i].y += powerUps[i].speed;
 
 
-      powerUps.push({
+    if (powerUps[i].y > canvas.height) {
 
-        x:
-          Math.random() *
-          (canvas.width - 30),
-
-        y: -30,
-
-        width: 30,
-
-        height: 30,
-
-        speed: 3,
-
-        type: type
-
-      });
+      powerUps.splice(i, 1);
 
     }
 
+  }
 
-    // COLLISION
-    function collision(a, b) {
 
-      return (
+  // ============================
+  // BLOCK COLLISION
+  // ============================
 
-        a.x <
-        b.x + b.width &&
+  for (
+    let i = blocks.length - 1;
+    i >= 0;
+    i--
+  ) {
 
-        a.x + a.width >
-        b.x &&
+    if (
+      collision(player, blocks[i])
+    ) {
 
-        a.y <
-        b.y + b.height &&
+      blocks.splice(i, 1);
 
-        a.y + a.height >
-        b.y
 
-      );
-
-    }
-
-
-    // UPDATE GAME
-    function update() {
-
-      if (!gameRunning) return;
-
-
-      frameCount++;
-
-
-      let currentSpeed =
-        speedBoost
-        ? 10
-        : player.speed;
-
-
-      // Move left
-      if (
-        keys["ArrowLeft"] &&
-        player.x > 0
-      ) {
-
-        player.x -= currentSpeed;
-
-      }
-
-
-      // Move right
-      if (
-        keys["ArrowRight"] &&
-        player.x <
-        canvas.width -
-        player.width
-      ) {
-
-        player.x += currentSpeed;
-
-      }
-
-
-      // Spawn blocks
-      let spawnChance =
-        Math.max(
-          0.012,
-          0.025 -
-          score * 0.0002
-        );
-
-
-      if (
-        Math.random() <
-        spawnChance
-      ) {
-
-        createBlock();
-
-      }
-
-
-      // Spawn coins
-      if (
-        Math.random() <
-        0.015
-      ) {
-
-        createCoin();
-
-      }
-
-
-      // Spawn power-ups
-      if (
-        Math.random() <
-        0.003
-      ) {
-
-        createPowerUp();
-
-      }
-
-
-      // Move blocks
-      for (
-        let i =
-        blocks.length - 1;
-        i >= 0;
-        i--
-      ) {
-
-        blocks[i].y +=
-          blocks[i].speed;
-
-
-        if (
-          blocks[i].y >
-          canvas.height
-        ) {
-
-          blocks.splice(i, 1);
-
-          score++;
-
-        }
-
-      }
-
-
-      // Move coins
-      for (
-        let i =
-        coins.length - 1;
-        i >= 0;
-        i--
-      ) {
-
-        coins[i].y +=
-          coins[i].speed;
-
-
-        if (
-          coins[i].y >
-          canvas.height
-        ) {
-
-          coins.splice(i, 1);
-
-        }
-
-      }
-
-
-      // Move power-ups
-      for (
-        let i =
-        powerUps.length - 1;
-        i >= 0;
-        i--
-      ) {
-
-        powerUps[i].y +=
-          powerUps[i].speed;
-
-
-        if (
-          powerUps[i].y >
-          canvas.height
-        ) {
-
-          powerUps.splice(i, 1);
-
-        }
-
-      }
-
-
-      // Block collision
-      for (
-        let i =
-        blocks.length - 1;
-        i >= 0;
-        i--
-      ) {
-
-        if (
-          collision(
-            player,
-            blocks[i]
-          )
-        ) {
-
-          blocks.splice(i, 1);
-
-
-          if (shield) {
-
-            shield = false;
-
-            showMessage(
-              "🛡️ SHIELD SAVED YOU!"
-            );
-
-          }
-
-          else {
-
-            lives--;
-
-            showMessage(
-              "💥 YOU LOST A LIFE!"
-            );
-
-
-            if (lives <= 0) {
-
-              gameOver();
-
-              return;
-
-            }
-
-          }
-
-        }
-
-      }
-
-
-      // Coin collision
-      for (
-        let i =
-        coins.length - 1;
-        i >= 0;
-        i--
-      ) {
-
-        if (
-          collision(
-            player,
-            coins[i]
-          )
-        ) {
-
-          coins.splice(i, 1);
-
-          coinCount++;
-
-          score += 5;
-
-
-          showMessage(
-            "🪙 +5 POINTS!"
-          );
-
-        }
-
-      }
-
-
-      // Power-up collision
-      for (
-        let i =
-        powerUps.length - 1;
-        i >= 0;
-        i--
-      ) {
-
-        if (
-          collision(
-            player,
-            powerUps[i]
-          )
-        ) {
-
-          let type =
-            powerUps[i].type;
-
-
-          powerUps.splice(i, 1);
-
-
-          // Shield
-          if (
-            type === "shield"
-          ) {
-
-            shield = true;
-
-            showMessage(
-              "🛡️ SHIELD ACTIVATED!"
-            );
-
-          }
-
-
-          // Speed boost
-          if (
-            type === "speed"
-          ) {
-
-            speedBoost = true;
-
-            showMessage(
-              "⚡ SPEED BOOST!"
-            );
-
-
-            setTimeout(
-              function() {
-
-                speedBoost =
-                  false;
-
-              },
-              5000
-            );
-
-          }
-
-        }
-
-      }
-
-
-      // Score display
-      document.getElementById(
-        "score"
-      ).textContent =
-        "Score: " + score;
-
-
-      // Stats display
-      document.getElementById(
-        "stats"
-      ).textContent =
-
-        "❤️".repeat(lives) +
-
-        " | 🪙 " +
-        coinCount +
-
-        " | 🏆 " +
-        highScore;
-
-    }
-
-
-    // DRAW GAME
-    function draw() {
-
-      ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-
-      // Road
-      ctx.fillStyle = "#333";
-
-
-      for (
-        let y = 0;
-        y < canvas.height;
-        y += 80
-      ) {
-
-        ctx.fillRect(
-
-          195,
-
-          y +
-          (frameCount % 80),
-
-          10,
-
-          40
-
-        );
-
-      }
-
-
-      // Player car
-      ctx.fillStyle =
-        shield
-        ? "cyan"
-        : "lime";
-
-
-      ctx.fillRect(
-
-        player.x,
-
-        player.y,
-
-        player.width,
-
-        player.height
-
-      );
-
-
-      // Car window
-      ctx.fillStyle = "#111";
-
-
-      ctx.fillRect(
-
-        player.x + 8,
-
-        player.y + 8,
-
-        player.width - 16,
-
-        18
-
-      );
-
-
-      // Wheels
-      ctx.fillStyle = "black";
-
-
-      ctx.fillRect(
-        player.x - 5,
-        player.y + 10,
-        8,
-        18
-      );
-
-
-      ctx.fillRect(
-        player.x +
-        player.width - 3,
-        player.y + 10,
-        8,
-        18
-      );
-
-
-      ctx.fillRect(
-        player.x - 5,
-        player.y + 38,
-        8,
-        18
-      );
-
-
-      ctx.fillRect(
-        player.x +
-        player.width - 3,
-        player.y + 38,
-        8,
-        18
-      );
-
-
-      // Shield
       if (shield) {
 
-        ctx.strokeStyle =
-          "cyan";
+        shield = false;
 
-        ctx.lineWidth = 4;
-
-
-        ctx.beginPath();
-
-
-        ctx.arc(
-
-          player.x +
-          player.width / 2,
-
-          player.y +
-          player.height / 2,
-
-          38,
-
-          0,
-
-          Math.PI * 2
-
-        );
-
-
-        ctx.stroke();
-
-      }
-
-
-      // Blocks
-      ctx.fillStyle = "red";
-
-
-      for (
-        let block of blocks
-      ) {
-
-        ctx.fillRect(
-
-          block.x,
-
-          block.y,
-
-          block.width,
-
-          block.height
-
+        showMessage(
+          "🛡️ SHIELD SAVED YOU!"
         );
 
       }
 
+      else {
 
-      // Coins
-      for (
-        let coin of coins
-      ) {
+        lives--;
 
-        ctx.fillStyle =
-          "gold";
-
-
-        ctx.beginPath();
-
-
-        ctx.arc(
-
-          coin.x + 12,
-
-          coin.y + 12,
-
-          12,
-
-          0,
-
-          Math.PI * 2
-
+        showMessage(
+          "💥 YOU LOST A LIFE!"
         );
 
 
-        ctx.fill();
+        if (lives <= 0) {
 
+          gameOver();
 
-        ctx.fillStyle = "#111";
-
-        ctx.font =
-          "14px Arial";
-
-
-        ctx.fillText(
-
-          "$",
-
-          coin.x + 8,
-
-          coin.y + 17
-
-        );
-
-      }
-
-
-      // Power-ups
-      for (
-        let power of powerUps
-      ) {
-
-        if (
-          power.type ===
-          "shield"
-        ) {
-
-          ctx.fillStyle =
-            "cyan";
+          return;
 
         }
-
-        else {
-
-          ctx.fillStyle =
-            "orange";
-
-        }
-
-
-        ctx.fillRect(
-
-          power.x,
-
-          power.y,
-
-          power.width,
-
-          power.height
-
-        );
-
-
-        ctx.fillStyle =
-          "black";
-
-        ctx.font =
-          "18px Arial";
-
-
-        ctx.fillText(
-
-          power.type ===
-          "shield"
-          ? "S"
-          : "⚡",
-
-          power.x + 6,
-
-          power.y + 21
-
-        );
 
       }
 
     }
 
-
-    // MESSAGE
-    function showMessage(text) {
-
-      const message =
-        document.getElementById(
-          "message"
-        );
+  }
 
 
-      message.textContent =
-        text;
+  // ============================
+  // COIN COLLISION
+  // ============================
 
+  for (
+    let i = coins.length - 1;
+    i >= 0;
+    i--
+  ) {
 
-      setTimeout(
-        function() {
+    if (
+      collision(player, coins[i])
+    ) {
 
-          message.textContent =
-            "";
+      coins.splice(i, 1);
 
-        },
-        1200
+      coinCount++;
+
+      score += 5;
+
+      showMessage(
+        "🪙 +5 POINTS!"
       );
 
     }
 
-
-    // GAME OVER
-    function gameOver() {
-
-      gameRunning = false;
+  }
 
 
-      if (
-        score > highScore
-      ) {
+  // ============================
+  // POWER-UP COLLISION
+  // ============================
 
-        highScore = score;
+  for (
+    let i = powerUps.length - 1;
+    i >= 0;
+    i--
+  ) {
+
+    if (
+      collision(player, powerUps[i])
+    ) {
+
+      const type =
+        powerUps[i].type;
+
+      powerUps.splice(i, 1);
 
 
-        localStorage.setItem(
+      // SHIELD
 
-          "dodgeHighScore",
+      if (type === "shield") {
 
-          highScore
+        shield = true;
 
+        showMessage(
+          "🛡️ SHIELD ACTIVATED!"
         );
 
       }
 
 
-      document.getElementById(
-        "finalScore"
-      ).textContent =
+      // SPEED
 
-        "Score: " +
-        score +
-        " | 🏆 High Score: " +
-        highScore;
+      if (type === "speed") {
 
+        speedBoost = true;
 
-      document.getElementById(
-        "gameOver"
-      ).style.display =
-        "block";
-
-    }
+        showMessage(
+          "⚡ SPEED BOOST!"
+        );
 
 
-    // PLAY AGAIN
-    function restartGame() {
+        setTimeout(function() {
 
-      startGame();
+          speedBoost = false;
+
+        }, 5000);
+
+      }
 
     }
 
-  </script></body>
+  }
+
+
+  updateStats();
+
+}
+
+
+// ============================
+// DRAW
+// ============================
+
+function draw() {
+
+  ctx.clearRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  // ============================
+  // ROAD
+  // ============================
+
+  ctx.fillStyle = "#333";
+
+  for (
+    let y = -80;
+    y < canvas.height + 80;
+    y += 80
+  ) {
+
+    ctx.fillRect(
+      195,
+      y + (frameCount % 80),
+      10,
+      40
+    );
+
+  }
+
+
+  // ============================
+  // PLAYER CAR
+  // ============================
+
+  ctx.fillStyle =
+    shield ? "cyan" : "lime";
+
+
+  ctx.fillRect(
+    player.x,
+    player.y,
+    player.width,
+    player.height
+  );
+
+
+  // Windows
+
+  ctx.fillStyle = "#111";
+
+  ctx.fillRect(
+    player.x + 8,
+    player.y + 8,
+    player.width - 16,
+    18
+  );
+
+
+  // Wheels
+
+  ctx.fillStyle = "black";
+
+  ctx.fillRect(
+    player.x - 5,
+    player.y + 10,
+    8,
+    18
+  );
+
+  ctx.fillRect(
+    player.x + player.width - 3,
+    player.y + 10,
+    8,
+    18
+  );
+
+  ctx.fillRect(
+    player.x - 5,
+    player.y + 38,
+    8,
+    18
+  );
+
+  ctx.fillRect(
+    player.x + player.width - 3,
+    player.y + 38,
+    8,
+    18
+  );
+
+
+  // ============================
+  // SHIELD
+  // ============================
+
+  if (shield) {
+
+    ctx.strokeStyle = "cyan";
+
+    ctx.lineWidth = 4;
+
+    ctx.beginPath();
+
+    ctx.arc(
+      player.x + player.width / 2,
+      player.y + player.height / 2,
+      38,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.stroke();
+
+  }
+
+
+  // ============================
+  // FALLING BLOCKS
+  // ============================
+
+  for (
+    const block of blocks
+  ) {
+
+    ctx.fillStyle = "red";
+
+    ctx.fillRect(
+      block.x,
+      block.y,
+      block.width,
+      block.height
+    );
+
+
+    // Block highlight
+
+    ctx.fillStyle = "#ff7777";
+
+    ctx.fillRect(
+      block.x + 5,
+      block.y + 5,
+      10,
+      10
+    );
+
+  }
+
+
+  // ============================
+  // COINS
+  // ============================
+
+  for (
+    const coin of coins
+  ) {
+
+    ctx.fillStyle = "gold";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      coin.x + 12.5,
+      coin.y + 12.5,
+      12,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    ctx.fillStyle = "#111";
+
+    ctx.font = "bold 14px Arial";
+
+    ctx.fillText(
+      "$",
+      coin.x + 8,
+      coin.y + 18
+    );
+
+  }
+
+
+  // ============================
+  // POWER-UPS
+  // ============================
+
+  for (
+    const power of powerUps
+  ) {
+
+    ctx.fillStyle =
+      power.type === "shield"
+      ? "cyan"
+      : "orange";
+
+
+    ctx.fillRect(
+      power.x,
+      power.y,
+      power.width,
+      power.height
+    );
+
+
+    ctx.fillStyle = "black";
+
+    ctx.font = "bold 18px Arial";
+
+
+    ctx.fillText(
+      power.type === "shield"
+        ? "S"
+        : "⚡",
+      power.x + 6,
+      power.y + 21
+    );
+
+  }
+
+}
+
+
+// ============================
+// STATS
+// ============================
+
+function updateStats() {
+
+  document.getElementById(
+    "score"
+  ).textContent =
+    "Score: " + score;
+
+
+  document.getElementById(
+    "stats"
+  ).textContent =
+
+    "❤️".repeat(lives) +
+
+    " | 🪙 " +
+    coinCount +
+
+    " | 🏆 " +
+    highScore;
+
+}
+
+
+// ============================
+// MESSAGE
+// ============================
+
+let messageTimer = null;
+
+
+function showMessage(text) {
+
+  const message =
+    document.getElementById("message");
+
+
+  message.textContent = text;
+
+
+  if (messageTimer) {
+
+    clearTimeout(messageTimer);
+
+  }
+
+
+  messageTimer =
+    setTimeout(function() {
+
+      message.textContent = "";
+
+    }, 1200);
+
+}
+
+
+// ============================
+// GAME LOOP
+// ============================
+
+function gameLoop() {
+
+  if (!gameRunning) {
+    return;
+  }
+
+
+  update();
+
+  draw();
+
+
+  animationId =
+    requestAnimationFrame(gameLoop);
+
+}
+
+
+// ============================
+// GAME OVER
+// ============================
+
+function gameOver() {
+
+  gameRunning = false;
+
+
+  if (score > highScore) {
+
+    highScore = score;
+
+    localStorage.setItem(
+      "dodgeHighScore",
+      highScore
+    );
+
+  }
+
+
+  updateStats();
+
+
+  document.getElementById(
+    "finalScore"
+  ).textContent =
+
+    "Score: " +
+    score +
+    " | 🏆 High Score: " +
+    highScore;
+
+
+  document.getElementById(
+    "gameOver"
+  ).style.display = "block";
+
+
+  if (animationId !== null) {
+
+    cancelAnimationFrame(
+      animationId
+    );
+
+    animationId = null;
+
+  }
+
+}
+
+
+// ============================
+// PLAY AGAIN
+// ============================
+
+function restartGame() {
+
+  gameRunning = false;
+
+
+  if (animationId !== null) {
+
+    cancelAnimationFrame(
+      animationId
+    );
+
+    animationId = null;
+
+  }
+
+
+  startGame();
+
+}
+
+</script></body>
 </html>
