@@ -180,7 +180,6 @@
 
       let currentSpeed = speedBoost ? 10 : player.speed;
 
-      // Player movement
       if (keys["ArrowLeft"] && player.x > 0) {
         player.x -= currentSpeed;
       }
@@ -192,24 +191,23 @@
         player.x += currentSpeed;
       }
 
-      // Spawn blocks
-      let spawnChance = Math.max(0.012, 0.025 - score * 0.0002);
+      let spawnChance = Math.max(
+        0.012,
+        0.025 - score * 0.0002
+      );
 
       if (Math.random() < spawnChance) {
         createBlock();
       }
 
-      // Spawn coins
       if (Math.random() < 0.015) {
         createCoin();
       }
 
-      // Spawn power-ups
       if (Math.random() < 0.003) {
         createPowerUp();
       }
 
-      // Move blocks
       for (let i = blocks.length - 1; i >= 0; i--) {
         blocks[i].y += blocks[i].speed;
 
@@ -219,7 +217,6 @@
         }
       }
 
-      // Move coins
       for (let i = coins.length - 1; i >= 0; i--) {
         coins[i].y += coins[i].speed;
 
@@ -228,7 +225,6 @@
         }
       }
 
-      // Move power-ups
       for (let i = powerUps.length - 1; i >= 0; i--) {
         powerUps[i].y += powerUps[i].speed;
 
@@ -237,7 +233,6 @@
         }
       }
 
-      // Block collision
       for (let i = blocks.length - 1; i >= 0; i--) {
         if (collision(player, blocks[i])) {
 
@@ -259,7 +254,6 @@
         }
       }
 
-      // Coin collision
       for (let i = coins.length - 1; i >= 0; i--) {
         if (collision(player, coins[i])) {
           coins.splice(i, 1);
@@ -270,7 +264,6 @@
         }
       }
 
-      // Power-up collision
       for (let i = powerUps.length - 1; i >= 0; i--) {
         if (collision(player, powerUps[i])) {
 
@@ -294,7 +287,6 @@
         }
       }
 
-      // Update stats
       document.getElementById("score").textContent =
         "Score: " + score;
 
@@ -307,13 +299,27 @@
     }
 
     function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
 
-      // Road lines
+      // Road
       ctx.fillStyle = "#333";
 
-      for (let y = 0; y < canvas.height; y += 80) {
-        ctx.fillRect(195, y + (frameCount % 80), 10, 40);
+      for (
+        let y = 0;
+        y < canvas.height;
+        y += 80
+      ) {
+        ctx.fillRect(
+          195,
+          y + (frameCount % 80),
+          10,
+          40
+        );
       }
 
       // Player car
@@ -326,7 +332,7 @@
         player.height
       );
 
-      // Car windows
+      // Windows
       ctx.fillStyle = "#111";
 
       ctx.fillRect(
@@ -336,10 +342,16 @@
         18
       );
 
-      // Car wheels
+      // Wheels
       ctx.fillStyle = "black";
 
-      ctx.fillRect(player.x - 5, player.y + 10, 8, 18);
+      ctx.fillRect(
+        player.x - 5,
+        player.y + 10,
+        8,
+        18
+      );
+
       ctx.fillRect(
         player.x + player.width - 3,
         player.y + 10,
@@ -347,7 +359,13 @@
         18
       );
 
-      ctx.fillRect(player.x - 5, player.y + 38, 8, 18);
+      ctx.fillRect(
+        player.x - 5,
+        player.y + 38,
+        8,
+        18
+      );
+
       ctx.fillRect(
         player.x + player.width - 3,
         player.y + 38,
@@ -355,12 +373,13 @@
         18
       );
 
-      // Shield effect
+      // Shield
       if (shield) {
         ctx.strokeStyle = "cyan";
         ctx.lineWidth = 4;
 
         ctx.beginPath();
+
         ctx.arc(
           player.x + player.width / 2,
           player.y + player.height / 2,
@@ -368,6 +387,7 @@
           0,
           Math.PI * 2
         );
+
         ctx.stroke();
       }
 
@@ -385,9 +405,11 @@
 
       // Coins
       for (let coin of coins) {
+
         ctx.fillStyle = "gold";
 
         ctx.beginPath();
+
         ctx.arc(
           coin.x + 12,
           coin.y + 12,
@@ -395,10 +417,12 @@
           0,
           Math.PI * 2
         );
+
         ctx.fill();
 
         ctx.fillStyle = "#111";
         ctx.font = "14px Arial";
+
         ctx.fillText(
           "$",
           coin.x + 8,
@@ -434,7 +458,8 @@
     }
 
     function showMessage(text) {
-      const message = document.getElementById("message");
+      const message =
+        document.getElementById("message");
 
       message.textContent = text;
 
@@ -448,6 +473,7 @@
 
       if (score > highScore) {
         highScore = score;
+
         localStorage.setItem(
           "dodgeHighScore",
           highScore
@@ -460,7 +486,9 @@
         "<br>" +
         "🏆 High Score: " + highScore +
         "<br>" +
-        "<button onclick='restartGame()'>Play Again</button>";
+        "<button onclick='restartGame()'>" +
+        "Play Again" +
+        "</button>";
 
       document.getElementById("gameOver").style.display =
         "block";
