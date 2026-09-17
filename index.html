@@ -1,1036 +1,966 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dodge the Blocks</title><style>
+<title>Dodge the Blocks - Car Edition</title>
+
+<style>
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 body {
-  margin: 0;
-  background: #111;
-  color: white;
-  font-family: Arial, sans-serif;
-  text-align: center;
-  overflow: hidden;
+    margin: 0;
+    background: #101010;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    overflow: hidden;
 }
 
 h1 {
-  margin: 10px 0;
-}
-
-#startScreen {
-  margin-top: 60px;
-}
-
-#startScreen h2 {
-  font-size: 30px;
-}
-
-#startButton {
-  font-size: 32px;
-  font-weight: bold;
-  padding: 18px 45px;
-  margin-top: 20px;
-  background: lime;
-  color: black;
-  border: 4px solid white;
-  border-radius: 15px;
-  cursor: pointer;
-  box-shadow: 0 0 20px lime;
-}
-
-#startButton:hover {
-  transform: scale(1.05);
-}
-
-#gameArea {
-  display: none;
+    margin: 10px 0 4px;
 }
 
 #score {
-  font-size: 22px;
+    font-size: 22px;
+    margin-bottom: 6px;
 }
 
-#stats {
-  font-size: 19px;
-  margin: 5px;
+#game {
+    position: relative;
+    width: 90vw;
+    max-width: 600px;
+    height: 72vh;
+    max-height: 700px;
+    margin: auto;
+    background:
+        linear-gradient(
+            to right,
+            transparent 48%,
+            rgba(255,255,255,.15) 49%,
+            rgba(255,255,255,.15) 51%,
+            transparent 52%
+        ),
+        #202020;
+    border: 4px solid white;
+    overflow: hidden;
 }
 
-#message {
-  height: 25px;
-  color: yellow;
-  font-size: 18px;
+/* ROAD LINES */
+.roadLine {
+    position: absolute;
+    width: 8px;
+    height: 60px;
+    background: white;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: .35;
 }
 
-canvas {
-  display: block;
-  margin: auto;
-  background: #222;
-  border: 3px solid white;
-  width: 400px;
-  height: 600px;
-  max-width: 95vw;
-  max-height: 70vh;
+/* PLAYER CAR */
+#player {
+    position: absolute;
+    width: 48px;
+    height: 70px;
+    background: #00ff55;
+    border-radius: 12px;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    box-shadow: 0 0 15px #00ff55;
 }
 
-#gameOver {
-  display: none;
-  font-size: 28px;
-  margin-top: 10px;
+/* CAR WINDOWS */
+#player::before {
+    content: "";
+    position: absolute;
+    width: 30px;
+    height: 22px;
+    left: 9px;
+    top: 8px;
+    background: #111;
+    border-radius: 6px;
 }
 
-#restartButton {
-  font-size: 22px;
-  font-weight: bold;
-  padding: 12px 25px;
-  margin-top: 10px;
-  cursor: pointer;
-  border-radius: 10px;
-  border: none;
+/* CAR LIGHTS */
+#player::after {
+    content: "";
+    position: absolute;
+    width: 34px;
+    height: 7px;
+    left: 7px;
+    bottom: 8px;
+    background: red;
+    border-radius: 5px;
 }
-</style></head><body><h1>🚗 Dodge the Blocks!</h1><!-- START SCREEN --><div id="startScreen">  <h2>🏁 Ready to Drive?</h2>  <p>Use the ⬅️ and ➡️ arrow keys to move.</p>  <button id="startButton" onclick="startGame()">
-    ▶ START GAME
-  </button></div><!-- GAME AREA --><div id="gameArea">  <div id="score">Score: 0</div>  <div id="stats">
-    ❤️❤️❤️ | 🪙 0 | 🏆 0
-  </div>  <div id="message"></div><canvas id="game" width="400" height="600"></canvas>
 
-  <div id="gameOver">💥 GAME OVER!
+/* FALLING BLOCKS */
+.block {
+    position: absolute;
+    width: 42px;
+    height: 42px;
+    background: red;
+    border-radius: 7px;
+    box-shadow: 0 0 10px red;
+}
 
-<br>
+/* START SCREEN */
+#startScreen {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.92);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
+}
 
-<span id="finalScore"></span>
+#startScreen h2 {
+    font-size: 32px;
+}
 
-<br>
+#startButton {
+    font-size: 28px;
+    font-weight: bold;
+    padding: 20px 45px;
+    border: none;
+    border-radius: 15px;
+    background: #00ff55;
+    color: black;
+    cursor: pointer;
+    box-shadow: 0 0 25px #00ff55;
+}
 
-<button id="restartButton" onclick="restartGame()">
-  🔄 PLAY AGAIN
-</button>
+#startButton:hover {
+    transform: scale(1.06);
+}
 
-  </div></div><script>
+#upgradePanel {
+    margin: 7px auto;
+    max-width: 650px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+}
 
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+.upgrade {
+    padding: 7px 9px;
+    border: 1px solid white;
+    background: #333;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+}
 
-let player;
-let blocks = [];
-let coins = [];
-let powerUps = [];
+.upgrade:disabled {
+    opacity: .4;
+}
 
-let score = 0;
-let coinCount = 0;
-let lives = 3;
+#soundStatus {
+    font-size: 14px;
+    margin-bottom: 3px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🚗 Dodge the Blocks</h1>
+
+<div id="score">Score: 0</div>
+<div id="soundStatus">🔊 Car sounds ready</div>
+
+<div id="game">
+
+    <div class="roadLine" style="top:0px"></div>
+    <div class="roadLine" style="top:150px"></div>
+    <div class="roadLine" style="top:300px"></div>
+    <div class="roadLine" style="top:450px"></div>
+    <div class="roadLine" style="top:600px"></div>
+
+    <div id="startScreen">
+        <h2>🚗 DODGE THE BLOCKS</h2>
+        <p>Use ← → or A / D to drive</p>
+        <p>🔊 Engine + acceleration + crash sounds</p>
+        <button id="startButton">START GAME</button>
+    </div>
+
+    <div id="player"></div>
+
+</div>
+
+<div id="upgradePanel">
+
+    <button class="upgrade" id="speedUpgrade">⚡ Speed</button>
+    <button class="upgrade" id="sizeUpgrade">🚗 Bigger Car</button>
+    <button class="upgrade" id="slowUpgrade">🐌 Slow Blocks</button>
+    <button class="upgrade" id="shieldUpgrade">🛡️ Shield</button>
+    <button class="upgrade" id="scoreUpgrade">💰 Bonus Score</button>
+    <button class="upgrade" id="doubleUpgrade">✖️ Double Points</button>
+    <button class="upgrade" id="freezeUpgrade">❄️ Freeze</button>
+    <button class="upgrade" id="lifeUpgrade">❤️ Extra Life</button>
+
+</div>
+
+<script>
+
+/* =========================================
+   GAME VARIABLES
+========================================= */
+
+const game = document.getElementById("game");
+const player = document.getElementById("player");
+const startScreen = document.getElementById("startScreen");
+const startButton = document.getElementById("startButton");
+const scoreDisplay = document.getElementById("score");
+const soundStatus = document.getElementById("soundStatus");
 
 let gameRunning = false;
 
+let playerX = 0;
+let playerSpeed = 7;
+let playerWidth = 48;
+let playerHeight = 70;
+
+let score = 0;
+let lives = 1;
+
+let blocks = [];
+
 let keys = {};
 
-let shield = false;
-let speedBoost = false;
-
-let frameCount = 0;
-
+let lastTime = 0;
 let lastBlockSpawn = 0;
-let lastCoinSpawn = 0;
-let lastPowerSpawn = 0;
 
-let animationId = null;
+let blockInterval = 850;
 
-let highScore =
-  Number(localStorage.getItem("dodgeHighScore")) || 0;
+let shield = false;
+let slowBlocks = false;
+let bonusScore = false;
+let doublePoints = false;
+let freezeBlocks = false;
 
 
-// ============================
-// KEYBOARD
-// ============================
+/* =========================================
+   AUDIO SYSTEM
+========================================= */
 
-document.addEventListener("keydown", function(event) {
+let audioContext;
+let engineOscillator;
+let engineGain;
+let engineFilter;
 
-  if (
-    event.key === "ArrowLeft" ||
-    event.key === "ArrowRight"
-  ) {
-    event.preventDefault();
-  }
+function setupAudio() {
 
-  keys[event.key] = true;
+    if (!audioContext) {
 
+        audioContext =
+            new (window.AudioContext ||
+            window.webkitAudioContext)();
+
+        engineOscillator =
+            audioContext.createOscillator();
+
+        engineGain =
+            audioContext.createGain();
+
+        engineFilter =
+            audioContext.createBiquadFilter();
+
+        engineOscillator.type = "sawtooth";
+
+        engineOscillator.frequency.value = 75;
+
+        engineGain.gain.value = 0.0001;
+
+        engineFilter.type = "lowpass";
+
+        engineFilter.frequency.value = 700;
+
+        engineOscillator
+            .connect(engineFilter)
+            .connect(engineGain)
+            .connect(audioContext.destination);
+
+        engineOscillator.start();
+    }
+
+    if (audioContext.state === "suspended") {
+        audioContext.resume();
+    }
+}
+
+
+/* =========================================
+   ENGINE SOUND
+========================================= */
+
+function startEngine() {
+
+    setupAudio();
+
+    engineGain.gain.cancelScheduledValues(
+        audioContext.currentTime
+    );
+
+    engineGain.gain.setTargetAtTime(
+        0.06,
+        audioContext.currentTime,
+        0.08
+    );
+}
+
+function stopEngine() {
+
+    if (!audioContext) return;
+
+    engineGain.gain.cancelScheduledValues(
+        audioContext.currentTime
+    );
+
+    engineGain.gain.setTargetAtTime(
+        0.0001,
+        audioContext.currentTime,
+        0.08
+    );
+}
+
+
+/* =========================================
+   ACCELERATION SOUND
+========================================= */
+
+function accelerationSound() {
+
+    if (!audioContext) return;
+
+    const osc =
+        audioContext.createOscillator();
+
+    const gain =
+        audioContext.createGain();
+
+    osc.type = "square";
+
+    osc.frequency.setValueAtTime(
+        100,
+        audioContext.currentTime
+    );
+
+    osc.frequency.exponentialRampToValueAtTime(
+        280,
+        audioContext.currentTime + 0.18
+    );
+
+    gain.gain.setValueAtTime(
+        0.08,
+        audioContext.currentTime
+    );
+
+    gain.gain.exponentialRampToValueAtTime(
+        0.001,
+        audioContext.currentTime + 0.2
+    );
+
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+
+    osc.start();
+    osc.stop(audioContext.currentTime + 0.2);
+}
+
+
+/* =========================================
+   CRASH SOUND
+========================================= */
+
+function crashSound() {
+
+    if (!audioContext) return;
+
+    const bufferSize =
+        audioContext.sampleRate * 0.35;
+
+    const buffer =
+        audioContext.createBuffer(
+            1,
+            bufferSize,
+            audioContext.sampleRate
+        );
+
+    const data =
+        buffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i++) {
+        data[i] =
+            (Math.random() * 2 - 1) *
+            (1 - i / bufferSize);
+    }
+
+    const source =
+        audioContext.createBufferSource();
+
+    const gain =
+        audioContext.createGain();
+
+    gain.gain.value = 0.3;
+
+    source.buffer = buffer;
+
+    source.connect(gain);
+    gain.connect(audioContext.destination);
+
+    source.start();
+}
+
+
+/* =========================================
+   UPDATE ENGINE PITCH
+========================================= */
+
+function updateEngineSound() {
+
+    if (!audioContext || !gameRunning) return;
+
+    let movement = 0;
+
+    if (keys["arrowleft"] || keys["a"]) {
+        movement++;
+    }
+
+    if (keys["arrowright"] || keys["d"]) {
+        movement++;
+    }
+
+    let frequency =
+        70 + movement * 45 + Math.min(score * 1.2, 80);
+
+    engineOscillator.frequency.setTargetAtTime(
+        frequency,
+        audioContext.currentTime,
+        0.05
+    );
+}
+
+
+/* =========================================
+   KEY CONTROLS
+========================================= */
+
+document.addEventListener("keydown", function(e) {
+
+    keys[e.key.toLowerCase()] = true;
+
+    if (
+        gameRunning &&
+        (
+            e.key === "ArrowLeft" ||
+            e.key === "ArrowRight" ||
+            e.key.toLowerCase() === "a" ||
+            e.key.toLowerCase() === "d"
+        )
+    ) {
+        accelerationSound();
+    }
+});
+
+document.addEventListener("keyup", function(e) {
+    keys[e.key.toLowerCase()] = false;
 });
 
 
-document.addEventListener("keyup", function(event) {
+/* =========================================
+   START GAME
+========================================= */
 
-  keys[event.key] = false;
-
-});
-
-
-// ============================
-// START GAME
-// ============================
+startButton.addEventListener("click", startGame);
 
 function startGame() {
 
-  if (gameRunning) {
-    return;
-  }
+    setupAudio();
 
-  player = {
-    x: 175,
-    y: 520,
-    width: 50,
-    height: 60,
-    speed: 6
-  };
+    startEngine();
 
-  blocks = [];
-  coins = [];
-  powerUps = [];
+    gameRunning = true;
 
-  score = 0;
-  coinCount = 0;
-  lives = 3;
+    score = 0;
+    lives = 1;
 
-  shield = false;
-  speedBoost = false;
+    playerSpeed = 7;
+    playerWidth = 48;
+    playerHeight = 70;
 
-  frameCount = 0;
+    shield = false;
+    slowBlocks = false;
+    bonusScore = false;
+    doublePoints = false;
+    freezeBlocks = false;
 
-  lastBlockSpawn = 0;
-  lastCoinSpawn = 0;
-  lastPowerSpawn = 0;
+    blockInterval = 850;
 
-  gameRunning = true;
+    scoreDisplay.textContent = "Score: 0";
 
-  keys = {};
+    startScreen.style.display = "none";
 
-  document.getElementById("startScreen").style.display = "none";
+    player.style.display = "block";
 
-  document.getElementById("gameArea").style.display = "block";
+    player.style.width =
+        playerWidth + "px";
 
-  document.getElementById("gameOver").style.display = "none";
+    player.style.height =
+        playerHeight + "px";
 
-  document.getElementById("message").textContent = "";
+    playerX =
+        (game.clientWidth - playerWidth) / 2;
 
-  updateStats();
+    player.style.left =
+        playerX + "px";
 
-  if (animationId !== null) {
-    cancelAnimationFrame(animationId);
-  }
+    blocks.forEach(block => {
+        block.element.remove();
+    });
 
-  gameLoop();
+    blocks = [];
 
+    lastTime = performance.now();
+
+    lastBlockSpawn = performance.now();
+
+    requestAnimationFrame(gameLoop);
 }
 
 
-// ============================
-// CREATE FALLING BLOCK
-// ============================
+/* =========================================
+   CREATE FALLING BLOCK
+========================================= */
 
 function createBlock() {
 
-  const difficulty = Math.min(score * 0.05, 6);
+    const block =
+        document.createElement("div");
 
-  const size = 40;
+    block.className = "block";
 
-  blocks.push({
+    const size = 42;
 
-    x: Math.random() * (canvas.width - size),
+    const x =
+        Math.random() *
+        (game.clientWidth - size);
 
-    y: -size,
+    block.style.width = size + "px";
+    block.style.height = size + "px";
+    block.style.left = x + "px";
+    block.style.top = -size + "px";
 
-    width: size,
+    game.appendChild(block);
 
-    height: size,
+    let speed =
+        3 + Math.random() * 3;
 
-    speed: 4 + Math.random() * 2 + difficulty
+    if (slowBlocks) {
+        speed *= 0.55;
+    }
 
-  });
-
+    blocks.push({
+        element: block,
+        x: x,
+        y: -size,
+        size: size,
+        speed: speed
+    });
 }
 
 
-// ============================
-// CREATE COIN
-// ============================
+/* =========================================
+   GAME LOOP
+========================================= */
 
-function createCoin() {
+function gameLoop(time) {
 
-  coins.push({
+    if (!gameRunning) return;
 
-    x: Math.random() * (canvas.width - 25),
+    const delta =
+        Math.min(time - lastTime, 40);
 
-    y: -25,
+    lastTime = time;
 
-    width: 25,
 
-    height: 25,
+    /* PLAYER MOVEMENT */
 
-    speed: 3
-
-  });
-
-}
-
-
-// ============================
-// CREATE POWER-UP
-// ============================
-
-function createPowerUp() {
-
-  const types = ["shield", "speed"];
-
-  const type =
-    types[Math.floor(Math.random() * types.length)];
-
-  powerUps.push({
-
-    x: Math.random() * (canvas.width - 30),
-
-    y: -30,
-
-    width: 30,
-
-    height: 30,
-
-    speed: 3,
-
-    type: type
-
-  });
-
-}
-
-
-// ============================
-// COLLISION
-// ============================
-
-function collision(a, b) {
-
-  return (
-
-    a.x < b.x + b.width &&
-
-    a.x + a.width > b.x &&
-
-    a.y < b.y + b.height &&
-
-    a.y + a.height > b.y
-
-  );
-
-}
-
-
-// ============================
-// UPDATE
-// ============================
-
-function update() {
-
-  if (!gameRunning) {
-    return;
-  }
-
-  frameCount++;
-
-
-  // ============================
-  // PLAYER MOVEMENT
-  // ============================
-
-  const currentSpeed =
-    speedBoost ? 10 : player.speed;
-
-
-  if (keys["ArrowLeft"]) {
-    player.x -= currentSpeed;
-  }
-
-
-  if (keys["ArrowRight"]) {
-    player.x += currentSpeed;
-  }
-
-
-  // Keep player inside canvas
-
-  if (player.x < 0) {
-    player.x = 0;
-  }
-
-
-  if (player.x > canvas.width - player.width) {
-    player.x = canvas.width - player.width;
-  }
-
-
-  // ============================
-  // BLOCK SPAWNING
-  // ============================
-
-  /*
-    Blocks now spawn using a timer
-    instead of random chance.
-
-    This makes sure blocks ALWAYS
-    start falling.
-  */
-
-  const blockInterval =
-    Math.max(350, 850 - score * 5);
-
-
-  if (
-    frameCount - lastBlockSpawn >
-    blockInterval / 16.67
-  ) {
-
-    createBlock();
-
-    lastBlockSpawn = frameCount;
-
-  }
-
-
-  // ============================
-  // COIN SPAWNING
-  // ============================
-
-  if (
-    frameCount - lastCoinSpawn >
-    90
-  ) {
-
-    if (Math.random() < 0.45) {
-      createCoin();
+    if (keys["arrowleft"] || keys["a"]) {
+        playerX -= playerSpeed;
     }
 
-    lastCoinSpawn = frameCount;
-
-  }
-
-
-  // ============================
-  // POWER-UP SPAWNING
-  // ============================
-
-  if (
-    frameCount - lastPowerSpawn >
-    360
-  ) {
-
-    if (Math.random() < 0.7) {
-      createPowerUp();
+    if (keys["arrowright"] || keys["d"]) {
+        playerX += playerSpeed;
     }
 
-    lastPowerSpawn = frameCount;
 
-  }
+    /* KEEP CAR ON ROAD */
 
-
-  // ============================
-  // MOVE BLOCKS
-  // ============================
-
-  for (
-    let i = blocks.length - 1;
-    i >= 0;
-    i--
-  ) {
-
-    blocks[i].y += blocks[i].speed;
-
-
-    // Block successfully dodged
-
-    if (blocks[i].y > canvas.height) {
-
-      blocks.splice(i, 1);
-
-      score++;
-
+    if (playerX < 0) {
+        playerX = 0;
     }
-
-  }
-
-
-  // ============================
-  // MOVE COINS
-  // ============================
-
-  for (
-    let i = coins.length - 1;
-    i >= 0;
-    i--
-  ) {
-
-    coins[i].y += coins[i].speed;
-
-
-    if (coins[i].y > canvas.height) {
-
-      coins.splice(i, 1);
-
-    }
-
-  }
-
-
-  // ============================
-  // MOVE POWER-UPS
-  // ============================
-
-  for (
-    let i = powerUps.length - 1;
-    i >= 0;
-    i--
-  ) {
-
-    powerUps[i].y += powerUps[i].speed;
-
-
-    if (powerUps[i].y > canvas.height) {
-
-      powerUps.splice(i, 1);
-
-    }
-
-  }
-
-
-  // ============================
-  // BLOCK COLLISION
-  // ============================
-
-  for (
-    let i = blocks.length - 1;
-    i >= 0;
-    i--
-  ) {
 
     if (
-      collision(player, blocks[i])
+        playerX >
+        game.clientWidth - playerWidth
+    ) {
+        playerX =
+            game.clientWidth - playerWidth;
+    }
+
+    player.style.left =
+        playerX + "px";
+
+
+    /* ENGINE SOUND */
+
+    updateEngineSound();
+
+
+    /* SPAWN BLOCKS */
+
+    if (
+        time - lastBlockSpawn >=
+        blockInterval
     ) {
 
-      blocks.splice(i, 1);
+        createBlock();
+
+        lastBlockSpawn = time;
+
+        blockInterval =
+            Math.max(
+                350,
+                850 - score * 5
+            );
+    }
 
 
-      if (shield) {
+    /* MOVE BLOCKS */
 
-        shield = false;
+    for (
+        let i = blocks.length - 1;
+        i >= 0;
+        i--
+    ) {
 
-        showMessage(
-          "🛡️ SHIELD SAVED YOU!"
-        );
+        const block = blocks[i];
 
-      }
+        if (!freezeBlocks) {
 
-      else {
-
-        lives--;
-
-        showMessage(
-          "💥 YOU LOST A LIFE!"
-        );
-
-
-        if (lives <= 0) {
-
-          gameOver();
-
-          return;
-
+            block.y +=
+                block.speed *
+                (delta / 16.67);
         }
 
-      }
+        block.element.style.top =
+            block.y + "px";
 
+
+        /* COLLISION */
+
+        if (checkCollision(block)) {
+
+            crashSound();
+
+            if (shield) {
+
+                shield = false;
+
+                player.style.border =
+                    "none";
+
+                block.element.remove();
+
+                blocks.splice(i, 1);
+
+                continue;
+            }
+
+            lives--;
+
+            block.element.remove();
+
+            blocks.splice(i, 1);
+
+            if (lives <= 0) {
+
+                endGame();
+
+                return;
+            }
+        }
+
+
+        /* BLOCK PASSED */
+
+        else if (
+            block.y >
+            game.clientHeight
+        ) {
+
+            let points = 1;
+
+            if (bonusScore) {
+                points += 1;
+            }
+
+            if (doublePoints) {
+                points *= 2;
+            }
+
+            score += points;
+
+            scoreDisplay.textContent =
+                "Score: " + score;
+
+            block.element.remove();
+
+            blocks.splice(i, 1);
+        }
     }
 
-  }
 
+    /* MOVE ROAD LINES */
 
-  // ============================
-  // COIN COLLISION
-  // ============================
+    document
+        .querySelectorAll(".roadLine")
+        .forEach(line => {
 
-  for (
-    let i = coins.length - 1;
-    i >= 0;
-    i--
-  ) {
+            let top =
+                parseFloat(
+                    line.style.top
+                );
 
-    if (
-      collision(player, coins[i])
-    ) {
+            top +=
+                5 +
+                Math.min(score / 10, 8);
 
-      coins.splice(i, 1);
+            if (top > game.clientHeight) {
+                top = -60;
+            }
 
-      coinCount++;
+            line.style.top =
+                top + "px";
+        });
 
-      score += 5;
 
-      showMessage(
-        "🪙 +5 POINTS!"
-      );
-
-    }
-
-  }
-
-
-  // ============================
-  // POWER-UP COLLISION
-  // ============================
-
-  for (
-    let i = powerUps.length - 1;
-    i >= 0;
-    i--
-  ) {
-
-    if (
-      collision(player, powerUps[i])
-    ) {
-
-      const type =
-        powerUps[i].type;
-
-      powerUps.splice(i, 1);
-
-
-      // SHIELD
-
-      if (type === "shield") {
-
-        shield = true;
-
-        showMessage(
-          "🛡️ SHIELD ACTIVATED!"
-        );
-
-      }
-
-
-      // SPEED
-
-      if (type === "speed") {
-
-        speedBoost = true;
-
-        showMessage(
-          "⚡ SPEED BOOST!"
-        );
-
-
-        setTimeout(function() {
-
-          speedBoost = false;
-
-        }, 5000);
-
-      }
-
-    }
-
-  }
-
-
-  updateStats();
-
-}
-
-
-// ============================
-// DRAW
-// ============================
-
-function draw() {
-
-  ctx.clearRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-
-  // ============================
-  // ROAD
-  // ============================
-
-  ctx.fillStyle = "#333";
-
-  for (
-    let y = -80;
-    y < canvas.height + 80;
-    y += 80
-  ) {
-
-    ctx.fillRect(
-      195,
-      y + (frameCount % 80),
-      10,
-      40
-    );
-
-  }
-
-
-  // ============================
-  // PLAYER CAR
-  // ============================
-
-  ctx.fillStyle =
-    shield ? "cyan" : "lime";
-
-
-  ctx.fillRect(
-    player.x,
-    player.y,
-    player.width,
-    player.height
-  );
-
-
-  // Windows
-
-  ctx.fillStyle = "#111";
-
-  ctx.fillRect(
-    player.x + 8,
-    player.y + 8,
-    player.width - 16,
-    18
-  );
-
-
-  // Wheels
-
-  ctx.fillStyle = "black";
-
-  ctx.fillRect(
-    player.x - 5,
-    player.y + 10,
-    8,
-    18
-  );
-
-  ctx.fillRect(
-    player.x + player.width - 3,
-    player.y + 10,
-    8,
-    18
-  );
-
-  ctx.fillRect(
-    player.x - 5,
-    player.y + 38,
-    8,
-    18
-  );
-
-  ctx.fillRect(
-    player.x + player.width - 3,
-    player.y + 38,
-    8,
-    18
-  );
-
-
-  // ============================
-  // SHIELD
-  // ============================
-
-  if (shield) {
-
-    ctx.strokeStyle = "cyan";
-
-    ctx.lineWidth = 4;
-
-    ctx.beginPath();
-
-    ctx.arc(
-      player.x + player.width / 2,
-      player.y + player.height / 2,
-      38,
-      0,
-      Math.PI * 2
-    );
-
-    ctx.stroke();
-
-  }
-
-
-  // ============================
-  // FALLING BLOCKS
-  // ============================
-
-  for (
-    const block of blocks
-  ) {
-
-    ctx.fillStyle = "red";
-
-    ctx.fillRect(
-      block.x,
-      block.y,
-      block.width,
-      block.height
-    );
-
-
-    // Block highlight
-
-    ctx.fillStyle = "#ff7777";
-
-    ctx.fillRect(
-      block.x + 5,
-      block.y + 5,
-      10,
-      10
-    );
-
-  }
-
-
-  // ============================
-  // COINS
-  // ============================
-
-  for (
-    const coin of coins
-  ) {
-
-    ctx.fillStyle = "gold";
-
-    ctx.beginPath();
-
-    ctx.arc(
-      coin.x + 12.5,
-      coin.y + 12.5,
-      12,
-      0,
-      Math.PI * 2
-    );
-
-    ctx.fill();
-
-
-    ctx.fillStyle = "#111";
-
-    ctx.font = "bold 14px Arial";
-
-    ctx.fillText(
-      "$",
-      coin.x + 8,
-      coin.y + 18
-    );
-
-  }
-
-
-  // ============================
-  // POWER-UPS
-  // ============================
-
-  for (
-    const power of powerUps
-  ) {
-
-    ctx.fillStyle =
-      power.type === "shield"
-      ? "cyan"
-      : "orange";
-
-
-    ctx.fillRect(
-      power.x,
-      power.y,
-      power.width,
-      power.height
-    );
-
-
-    ctx.fillStyle = "black";
-
-    ctx.font = "bold 18px Arial";
-
-
-    ctx.fillText(
-      power.type === "shield"
-        ? "S"
-        : "⚡",
-      power.x + 6,
-      power.y + 21
-    );
-
-  }
-
-}
-
-
-// ============================
-// STATS
-// ============================
-
-function updateStats() {
-
-  document.getElementById(
-    "score"
-  ).textContent =
-    "Score: " + score;
-
-
-  document.getElementById(
-    "stats"
-  ).textContent =
-
-    "❤️".repeat(lives) +
-
-    " | 🪙 " +
-    coinCount +
-
-    " | 🏆 " +
-    highScore;
-
-}
-
-
-// ============================
-// MESSAGE
-// ============================
-
-let messageTimer = null;
-
-
-function showMessage(text) {
-
-  const message =
-    document.getElementById("message");
-
-
-  message.textContent = text;
-
-
-  if (messageTimer) {
-
-    clearTimeout(messageTimer);
-
-  }
-
-
-  messageTimer =
-    setTimeout(function() {
-
-      message.textContent = "";
-
-    }, 1200);
-
-}
-
-
-// ============================
-// GAME LOOP
-// ============================
-
-function gameLoop() {
-
-  if (!gameRunning) {
-    return;
-  }
-
-
-  update();
-
-  draw();
-
-
-  animationId =
     requestAnimationFrame(gameLoop);
-
 }
 
 
-// ============================
-// GAME OVER
-// ============================
+/* =========================================
+   COLLISION DETECTION
+========================================= */
 
-function gameOver() {
+function checkCollision(block) {
 
-  gameRunning = false;
+    const playerY =
+        game.clientHeight -
+        playerHeight -
+        20;
 
-
-  if (score > highScore) {
-
-    highScore = score;
-
-    localStorage.setItem(
-      "dodgeHighScore",
-      highScore
+    return (
+        playerX <
+            block.x + block.size &&
+        playerX + playerWidth >
+            block.x &&
+        playerY <
+            block.y + block.size &&
+        playerY + playerHeight >
+            block.y
     );
-
-  }
-
-
-  updateStats();
-
-
-  document.getElementById(
-    "finalScore"
-  ).textContent =
-
-    "Score: " +
-    score +
-    " | 🏆 High Score: " +
-    highScore;
-
-
-  document.getElementById(
-    "gameOver"
-  ).style.display = "block";
-
-
-  if (animationId !== null) {
-
-    cancelAnimationFrame(
-      animationId
-    );
-
-    animationId = null;
-
-  }
-
 }
 
 
-// ============================
-// PLAY AGAIN
-// ============================
+/* =========================================
+   GAME OVER
+========================================= */
 
-function restartGame() {
+function endGame() {
 
-  gameRunning = false;
+    gameRunning = false;
 
+    stopEngine();
 
-  if (animationId !== null) {
+    player.style.display = "none";
 
-    cancelAnimationFrame(
-      animationId
+    startScreen.style.display =
+        "flex";
+
+    startButton.textContent =
+        "PLAY AGAIN";
+
+    const message =
+        document.createElement("p");
+
+    message.textContent =
+        "💥 Game Over! Final Score: " +
+        score;
+
+    startScreen.insertBefore(
+        message,
+        startButton
     );
 
-    animationId = null;
+    setTimeout(() => {
 
-  }
+        if (message.parentNode) {
+            message.remove();
+        }
 
-
-  startGame();
-
+    }, 2500);
 }
 
-</script></body>
+
+/* =========================================
+   UPGRADE 1: SPEED
+========================================= */
+
+document
+.getElementById("speedUpgrade")
+.addEventListener("click", function() {
+
+    playerSpeed += 3;
+
+    this.disabled = true;
+});
+
+
+/* =========================================
+   UPGRADE 2: BIGGER CAR
+========================================= */
+
+document
+.getElementById("sizeUpgrade")
+.addEventListener("click", function() {
+
+    playerWidth += 8;
+    playerHeight += 10;
+
+    player.style.width =
+        playerWidth + "px";
+
+    player.style.height =
+        playerHeight + "px";
+
+    this.disabled = true;
+});
+
+
+/* =========================================
+   UPGRADE 3: SLOW BLOCKS
+========================================= */
+
+document
+.getElementById("slowUpgrade")
+.addEventListener("click", function() {
+
+    slowBlocks = true;
+
+    blocks.forEach(block => {
+        block.speed *= 0.55;
+    });
+
+    this.disabled = true;
+});
+
+
+/* =========================================
+   UPGRADE 4: SHIELD
+========================================= */
+
+document
+.getElementById("shieldUpgrade")
+.addEventListener("click", function() {
+
+    shield = true;
+
+    player.style.border =
+        "4px solid cyan";
+
+    player.style.boxShadow =
+        "0 0 25px cyan";
+
+    this.disabled = true;
+});
+
+
+/* =========================================
+   UPGRADE 5: BONUS SCORE
+========================================= */
+
+document
+.getElementById("scoreUpgrade")
+.addEventListener("click", function() {
+
+    bonusScore = true;
+
+    this.disabled = true;
+});
+
+
+/* =========================================
+   UPGRADE 6: DOUBLE POINTS
+========================================= */
+
+document
+.getElementById("doubleUpgrade")
+.addEventListener("click", function() {
+
+    doublePoints = true;
+
+    this.disabled = true;
+});
+
+
+/* =========================================
+   UPGRADE 7: FREEZE
+========================================= */
+
+document
+.getElementById("freezeUpgrade")
+.addEventListener("click", function() {
+
+    freezeBlocks = true;
+
+    this.textContent =
+        "❄️ Frozen!";
+
+    this.disabled = true;
+
+    setTimeout(() => {
+
+        freezeBlocks = false;
+
+        this.textContent =
+            "❄️ Freeze";
+
+    }, 5000);
+});
+
+
+/* =========================================
+   UPGRADE 8: EXTRA LIFE
+========================================= */
+
+document
+.getElementById("lifeUpgrade")
+.addEventListener("click", function() {
+
+    lives++;
+
+    this.disabled = true;
+});
+
+</script>
+
+</body>
 </html>
