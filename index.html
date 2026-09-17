@@ -1,0 +1,66 @@
+import random
+import os
+import time
+
+width = 30
+player = width // 2
+blocks = []
+score = 0
+
+while True:
+    os.system("clear")
+
+    # Move player
+    print("DODGE THE BLOCKS!")
+    print("A = left | D = right | Q = quit")
+    print("Score:", score)
+    print()
+
+    # Draw game
+    for y in range(15):
+        line = ""
+
+        for x in range(width):
+            if y == 14 and x == player:
+                line += "P"
+            elif [x, y] in blocks:
+                line += "#"
+            else:
+                line += " "
+
+        print("|" + line + "|")
+
+    print("+" + "-" * width + "+")
+
+    # Check collision
+    for block in blocks:
+        if block[1] == 14 and block[0] == player:
+            print("\nGAME OVER!")
+            print("Final score:", score)
+            input("Press Enter to quit...")
+            quit()
+
+    # Move blocks down
+    for block in blocks:
+        block[1] += 1
+
+    # Remove blocks
+    blocks = [b for b in blocks if b[1] < 15]
+
+    # Randomly create block
+    if random.randint(1, 3) == 1:
+        blocks.append([random.randint(0, width - 1), 0])
+
+    # Keyboard input
+    command = input("\nMove: ").lower()
+
+    if command == "a" and player > 0:
+        player -= 1
+
+    if command == "d" and player < width - 1:
+        player += 1
+
+    if command == "q":
+        quit()
+
+    score += 1
